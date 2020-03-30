@@ -23,7 +23,7 @@ while(cap.isOpened()):
 
 
     cv2.imshow('frame',frame)
-    cv2.imshow('derivalt',f_med)
+    cv2.imshow('median',f_med)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

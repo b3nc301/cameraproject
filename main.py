@@ -27,7 +27,7 @@ while cap.isOpened():
     f_abs = np.abs(f_sub)
     # Gauss-szűrő
     f_gauss = cv2.GaussianBlur(f_abs.astype(np.uint8), (9, 9), 0)
-    # Korrekció
+    # Küszöbölés
     f_mov = (f_abs.astype(int) > 20) * 255
 
     # kontúrok méretének megnövelése

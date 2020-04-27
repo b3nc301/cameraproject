@@ -45,7 +45,7 @@ while cap.isOpened():
             pass
     # megjelenítés
     frame2rs = cv2.resize(frame2, (960, 540))  # frame átméretezése
-    cv2.imshow('MUKODJEL MAR', frame2rs)
+    cv2.imshow('Kimenet', frame2rs)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép, vagy ha vége a videóstreamnek
         break

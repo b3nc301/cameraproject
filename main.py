@@ -11,7 +11,7 @@ best = video.getbest(preftype="mp4")
 # -('filenev.mp4') -> mp4 source
 # -(0) -> main camera
 # -(best.url) -> youtube video
-cap = cv2.VideoCapture(best.url)
+cap = cv2.VideoCapture(0)
 # kezdő frame beolvasása
 _, frame = cap.read()
 #változók beállítása
@@ -32,24 +32,27 @@ while cap.isOpened():
         # Küszöbölés
         f_mov = (f_abs.astype(int) > 20) * 255
         # nyitás
-        f_open=cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (9, 9))
+        f_open=cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3))
         # kontúrok méretének megnövelése(dilettáció)
         f_dil = cv2.dilate(f_open, None, iterations=3)
         # kontúrok keresése
         contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # kontúr(ok) bekeretezése
         if len(contours) != 0:
-            cns=sorted(contours, key=cv2.contourArea) # a kontúrok rendezése csökkenő sorrendbe
+            cns=sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
             c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
             for cn in cns:
                 x1, y1, w1, h1 = cv2.boundingRect(cn)
-                if((abs(x1-x)<=5 & abs(y1-y)<=5)&(cv2.contourArea(cn) > 800)):          # Ha az előző kontúr és a jelenlegi kontúr sarka között 5 képpont vagy kevesebb van akkor ez a kontúr lesz a jó
+                if((abs(x1-x)<=3 & abs(y1-y)<=3)&(cv2.contourArea(cn) > 800)):          # Ha az előző kontúr és a jelenlegi kontúr sarka között 5 képpont vagy kevesebb van akkor ez a kontúr lesz a jó
                     c=cn
-                    print("MOST")
+                   # print("MOST")
                     break
                 else: continue
             if (cv2.contourArea(c) > 800) :  # ha a kontúr területe nagyobb mint 800
                 x, y, w, h = cv2.boundingRect(c)  # kontúr adatai(x,y sarok, w,h méretei)
+                ''' if(cv2.boundingRect(max(contours, key=cv2.contourArea))!=cv2.boundingRect(c)):
+                    cv2.rectangle(frame2, (x, y), (x + w, y + h), (255, 0, 0), 2)  # zöld négyzet rajzolása a frame2 képre
+                else:'''
                 cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)  # zöld négyzet rajzolása a frame2 képre
             else:
                 pass

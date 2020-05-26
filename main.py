@@ -1,6 +1,17 @@
 import numpy as np
-import cv2
-import pafy
+import cv2, pafy, argparse, sys
+
+# Parancssori argumentumok tesztelése
+arg = argparse.ArgumentParser(description='Motion detector security camera / Mozgáskövető biztonsági kamera program')
+arg.add_argument("-v", "--video", help="path to the video file / Videófájl útvonala")
+arg.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size / Minimális területméret")
+arg.add_argument("-c", "--cam", type=int, help="camera device code/Kamera eszközkódja")
+arg.add_argument("-s", "--stream", help="stream url/Videostream url-je")
+args = vars(arg.parse_args())
+if len(sys.argv) == 1:
+    arg.print_help()
+    sys.exit()
+
 
 # TESZTELÉS VIDEO STREAMBÓL
 

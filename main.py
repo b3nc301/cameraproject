@@ -4,13 +4,17 @@ import pafy
 
 # TESZTELÉS VIDEO STREAMBÓL
 
-url = "https://www.youtube.com/watch?v=CkVJyAKwByw"
+
 url = "https://www.youtube.com/watch?v=MNn9qKG2UFI"
-url = "https://www.youtube.com/watch?v=jjlBnrzSGjc"
 url = "https://www.youtube.com/watch?v=2dysaG-q6Lc"
-url = "https://www.youtube.com/watch?v=mRe-514tGMg"
-url = "https://www.youtube.com/watch?v=lZsDve8_DkM"
 url = "https://www.youtube.com/watch?v=xeuWNm72YRg"
+
+url = "https://www.youtube.com/watch?v=mRe-514tGMg"
+
+url = "https://www.youtube.com/watch?v=jjlBnrzSGjc"
+url = "https://www.youtube.com/watch?v=lZsDve8_DkM"
+url = "https://www.youtube.com/watch?v=CkVJyAKwByw"
+
 video = pafy.new(url)
 best = video.getbest(preftype="mp4")
 
@@ -18,71 +22,64 @@ best = video.getbest(preftype="mp4")
 # -('filenev.mp4') -> mp4 source
 # -(0) -> main camera
 # -(best.url) -> youtube video
+x = y = cX = cY = 0
 cap = cv2.VideoCapture(best.url)
 # kezdő frame beolvasása
 _, frame = cap.read()
 # változók beállítása
-x = y = 0
 # program start
 while cap.isOpened():
     frame2 = frame  # előző frame rögzítése
     ret, frame = cap.read()
-    if(ret):
-        # szürkeárnyalati konverzió
-        f_gray_2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY).astype(int)
-        f_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(int)
-        # kivonás és abszolútérték vétel
-        f_sub = f_gray_2 - f_gray
-        f_abs = np.abs(f_sub)
-        # Gauss-szűrő
-        f_gauss = cv2.GaussianBlur(f_abs.astype(np.uint8), (9, 9), 0)
-        # Küszöbölés
-        f_mov = (f_abs.astype(int) > 20) * 255
-        # nyitás
-        f_open=cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
-        # kontúrok méretének megnövelése(dilettáció)
-        f_dil = cv2.dilate(f_open, None, iterations=3)
-        # kontúrok keresése
-        contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # kontúr(ok) bekeretezése
-        if len(contours) != 0:
-            cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
-            c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
-            for cn in cns:
-                x1, y1, w1, h1 = cv2.boundingRect(cn)
-                if (abs(x1 - x) <= 5 & abs(y1 - y) <= 5) & (cv2.contourArea(cn) > 800):          # Ha az előző kontúr és a jelenlegi kontúr sarka között 5 képpont vagy kevesebb van akkor ez a kontúr lesz a jó
-                    c = cn
-                    # print("MOST")
-                    break
-                else:
-                    continue
-            if cv2.contourArea(c) > 800:  # ha a kontúr területe nagyobb mint 800
-                x, y, w, h = cv2.boundingRect(c)  # kontúr adatai(x,y sarok, w,h méretei)
-                ''' if(cv2.boundingRect(max(contours, key=cv2.contourArea))!=cv2.boundingRect(c)):
-                    cv2.rectangle(frame2, (x, y), (x + w, y + h), (255, 0, 0), 2)  # zöld négyzet rajzolása a frame2 képre
-                else:'''
-                cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)  # zöld négyzet rajzolása a frame2 képre
+    # szürkeárnyalati konverzió
+    f_gray_2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY).astype(int)
+    f_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(int)
+    # kivonás és abszolútérték vétel
+    f_sub = f_gray_2 - f_gray
+    f_abs = np.abs(f_sub)
+    # Gauss-szűrő
+    f_gauss = cv2.GaussianBlur(f_abs.astype(np.uint8), (9, 9), 0)
+    # Küszöbölés
+    f_mov = (f_abs.astype(int) > 20) * 255
+    # nyitás
+    f_open = cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
+    # kontúrok méretének megnövelése(dilettáció)
+    f_dil = cv2.dilate(f_open, None, iterations=3)
+    # kontúrok keresése
+    contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # kontúr(ok) bekeretezése
+    if len(contours) != 0:
+       # cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
+        c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
+        cns = sorted(contours, key=cv2.contourArea, reverse=True)
+        for cn in cns:
+            x1, y1, w1, h1 = cv2.boundingRect(cn)
+            mom = cv2.moments(cn)
+            cX1 = int(mom["m10"] / mom["m00"])
+            cY1 = int(mom["m01"] / mom["m00"])
+            if ((abs(x1 - x) <= 10 & abs(y1 - y) <= 10) | (abs(cX1 - cX) <= 10 & abs(cY1 - cY) <= 10)) & (
+                    cv2.contourArea(cn) > 400):
+                # Ha az előző kontúr és a jelenlegi kontúr sarka között 5 képpont vagy kevesebb van akkor ez a kontúr lesz a jó
+                c = cn
+                break
             else:
-                pass
-        # megjelenítés
-        frame2rs = cv2.resize(frame2, (960, 540))  # frame átméretezése
-        cv2.imshow('Kimenet', frame2rs)
-        cv2.drawContours(frame2, c, -1, (0, 255, 0), 3)
-        cv2.imshow('Kontur', frame2)
-        # Tesztek
-        height, width, channels = frame2.shape
-        frame3 = np.zeros((height, width, 3), np.uint8)
-        cv2.drawContours(frame3, c, -1, (255, 255, 255), 3)
+                continue
+        if cv2.contourArea(c) > 400:  # ha a kontúr területe nagyobb mint 800
+            x, y, w, h = cv2.boundingRect(c)  # kontúr adatai(x,y sarok, w,h méretei)
+            m = cv2.moments(c)
+            cX = int(m["m10"] / m["m00"])
+            cY = int(m["m01"] / m["m00"])
+            ''' if(cv2.boundingRect(max(contours, key=cv2.contourArea))!=cv2.boundingRect(c)):
+                cv2.rectangle(frame2, (x, y), (x + w, y + h), (255, 0, 0), 2)  # zöld négyzet rajzolása a frame2 képre
+            else:'''
+            cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)  # zöld négyzet rajzolása a frame2 képre
+        else:
+            pass
+    # megjelenítés
+    frame2rs = cv2.resize(frame2, (960, 540))  # frame átméretezése
+    cv2.imshow('Kimenet', frame2rs)
 
-        M = cv2.moments(c)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        cv2.circle(frame3, (cX, cY), 5, (0, 0, 255), -1)
-        cv2.imshow('kont2', frame3)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép, vagy ha vége a videóstreamnek
-            break
-    else:
+    if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép, vagy ha vége a videóstreamnek
         break
 
 cap.release()  # capture bezárása

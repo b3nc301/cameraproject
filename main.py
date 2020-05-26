@@ -3,13 +3,14 @@ import cv2
 import pafy
 
 # TESZTELÉS VIDEO STREAMBÓL
-url = "https://www.youtube.com/watch?v=xeuWNm72YRg"
+
 url = "https://www.youtube.com/watch?v=CkVJyAKwByw"
 url = "https://www.youtube.com/watch?v=MNn9qKG2UFI"
 url = "https://www.youtube.com/watch?v=jjlBnrzSGjc"
-url = "https://www.youtube.com/watch?v=lZsDve8_DkM"
 url = "https://www.youtube.com/watch?v=2dysaG-q6Lc"
 url = "https://www.youtube.com/watch?v=mRe-514tGMg"
+url = "https://www.youtube.com/watch?v=lZsDve8_DkM"
+url = "https://www.youtube.com/watch?v=xeuWNm72YRg"
 video = pafy.new(url)
 best = video.getbest(preftype="mp4")
 
@@ -66,6 +67,18 @@ while cap.isOpened():
         # megjelenítés
         frame2rs = cv2.resize(frame2, (960, 540))  # frame átméretezése
         cv2.imshow('Kimenet', frame2rs)
+        cv2.drawContours(frame2, c, -1, (0, 255, 0), 3)
+        cv2.imshow('Kontur', frame2)
+        # Tesztek
+        height, width, channels = frame2.shape
+        frame3 = np.zeros((height, width, 3), np.uint8)
+        cv2.drawContours(frame3, c, -1, (255, 255, 255), 3)
+
+        M = cv2.moments(c)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        cv2.circle(frame3, (cX, cY), 5, (0, 0, 255), -1)
+        cv2.imshow('kont2', frame3)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép, vagy ha vége a videóstreamnek
             break

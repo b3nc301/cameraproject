@@ -1,32 +1,53 @@
 import numpy as np
-import cv2
-import pafy
+import cv2, pafy, argparse, sys
+from os import path
 
-# TESZTELÉS VIDEO STREAMBÓL
-url = "https://www.youtube.com/watch?v=xeuWNm72YRg"
-url = "https://www.youtube.com/watch?v=CkVJyAKwByw"
-url = "https://www.youtube.com/watch?v=MNn9qKG2UFI"
-url = "https://www.youtube.com/watch?v=jjlBnrzSGjc"
-url = "https://www.youtube.com/watch?v=lZsDve8_DkM"
-url = "https://www.youtube.com/watch?v=2dysaG-q6Lc"
-url = "https://www.youtube.com/watch?v=mRe-514tGMg"
-video = pafy.new(url)
-best = video.getbest(preftype="mp4")
+# Parancssori argumentumok létrehozása
+arg = argparse.ArgumentParser(description='Mozgáskövető biztonsági kamera program')
+arg.add_argument("-c", "--cam", type=int, help="Kamera eszközkódja")
+arg.add_argument("-v", "--video", help="Videófájl útvonala")
+arg.add_argument("-s", "--stream", help="Videostream url-je")
+arg.add_argument("-y", "--youtube", help="Youtube video url-je")
+arg.add_argument("-a", "--min-area", type=int, default=700, help=" Minimális területméret(nem kötelező, alapból 500)")
+args = arg.parse_args()
 
-# Video input módok megadása
-# -('filenev.mp4') -> mp4 source
-# -(0) -> main camera
-# -(best.url) -> youtube video
-cap = cv2.VideoCapture(best.url)
+# Parancssori argumentumok meglétének ellenőrzése
+if args.cam is not None:
+    inp = args.cam
+elif args.video is not None:
+    inp = args.video
+    if path.exists(inp) is False:
+        print("A fájl nem létezik!")
+        sys.exit()
+elif args.stream is not None:
+    inp = args.stream           # EXCEPTION NINCS BENNE, ELFOGAD HIBÁS ÉRTÉKET IS
+elif args.youtube is not None:
+    url = args.youtube
+    try:
+        video = pafy.new(url)
+    except ValueError:
+        print("Nem érvényes youtube videó link")
+        sys.exit()
+    best = video.getbest(preftype="mp4")
+    inp = best.url
+else:
+    arg.print_help()
+    sys.exit()
+
+# Video input
+cap = cv2.VideoCapture(inp)
+
+# változók alapértékének beállítása
+x = y = cX = cY = 0
+
 # kezdő frame beolvasása
 _, frame = cap.read()
-# változók beállítása
-x = y = 0
+
 # program start
 while cap.isOpened():
     frame2 = frame  # előző frame rögzítése
     ret, frame = cap.read()
-    if(ret):
+    if (ret):
         # szürkeárnyalati konverzió
         f_gray_2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY).astype(int)
         f_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(int)
@@ -37,26 +58,36 @@ while cap.isOpened():
         f_gauss = cv2.GaussianBlur(f_abs.astype(np.uint8), (9, 9), 0)
         # Küszöbölés
         f_mov = (f_abs.astype(int) > 20) * 255
-        # nyitás
-        f_open=cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
+        # Nyitás
+        f_open = cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
         # kontúrok méretének megnövelése(dilettáció)
         f_dil = cv2.dilate(f_open, None, iterations=3)
         # kontúrok keresése
         contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # kontúr(ok) bekeretezése
+        # megfelelő kontúr bekeretezése
         if len(contours) != 0:
-            cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
+           # cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
             c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
+            cns = sorted(contours, key=cv2.contourArea, reverse=True)
             for cn in cns:
                 x1, y1, w1, h1 = cv2.boundingRect(cn)
-                if (abs(x1 - x) <= 5 & abs(y1 - y) <= 5) & (cv2.contourArea(cn) > 800):          # Ha az előző kontúr és a jelenlegi kontúr sarka között 5 képpont vagy kevesebb van akkor ez a kontúr lesz a jó
+                mom = cv2.moments(cn)
+                cX1 = int(mom["m10"] / mom["m00"])
+                cY1 = int(mom["m01"] / mom["m00"])
+                # Ha az előző kontúr és a jelenlegi kontúr sarka között 10 képpont vagy kevesebb van
+                # és az előző kontúr középpontja és a jelenlegi kontúr középpontja között 10 képpont vagy kevesebb van
+                # akkor ez a kontúr lesz a jó
+                if ((abs(x1 - x) <= 10 & abs(y1 - y) <= 10) | (abs(cX1 - cX) <= 10 & abs(cY1 - cY) <= 10)) & (
+                        cv2.contourArea(cn) > args.min_area):
                     c = cn
-                    # print("MOST")
                     break
                 else:
                     continue
-            if cv2.contourArea(c) > 800:  # ha a kontúr területe nagyobb mint 800
+            if cv2.contourArea(c) > args.min_area:  # ha a kontúr területe nagyobb mint min_area
                 x, y, w, h = cv2.boundingRect(c)  # kontúr adatai(x,y sarok, w,h méretei)
+                m = cv2.moments(c)
+                cX = int(m["m10"] / m["m00"])
+                cY = int(m["m01"] / m["m00"])
                 ''' if(cv2.boundingRect(max(contours, key=cv2.contourArea))!=cv2.boundingRect(c)):
                     cv2.rectangle(frame2, (x, y), (x + w, y + h), (255, 0, 0), 2)  # zöld négyzet rajzolása a frame2 képre
                 else:'''

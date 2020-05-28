@@ -1,13 +1,15 @@
 import numpy as np
 import cv2, pafy, argparse, sys
 from os import path
+import time
+
 
 # Parancssori argumentumok létrehozása
 arg = argparse.ArgumentParser(description='Mozgáskövető biztonsági kamera program')
 arg.add_argument("-c", "--cam", type=int, help="Kamera eszközkódja")
 arg.add_argument("-v", "--video", help="Videófájl útvonala")
 arg.add_argument("-s", "--stream", help="Videostream url-je")
-arg.add_argument("-y", "--youtube", help="Youtube video url-je")
+arg.add_argument("-y", "--youtube", help="Youtube video url-je)")
 arg.add_argument("-a", "--min-area", type=int, default=700, help=" Minimális területméret(nem kötelező, alapból 500)")
 args = arg.parse_args()
 
@@ -28,7 +30,7 @@ elif args.youtube is not None:
     except ValueError:
         print("Nem érvényes youtube videó link")
         sys.exit()
-    best = video.getbest(preftype="mp4")
+    best = video.getbest(preftype="any")
     inp = best.url
 else:
     arg.print_help()
@@ -42,7 +44,8 @@ x = y = cX = cY = 0
 
 # kezdő frame beolvasása
 _, frame = cap.read()
-
+fps=cap.get(cv2.CAP_PROP_FPS)
+ms = int(round(time.time() * 1000))
 # program start
 while cap.isOpened():
     frame2 = frame  # előző frame rögzítése
@@ -66,7 +69,7 @@ while cap.isOpened():
         contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # megfelelő kontúr bekeretezése
         if len(contours) != 0:
-           # cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
+            cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
             c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
             cns = sorted(contours, key=cv2.contourArea, reverse=True)
             for cn in cns:
@@ -81,25 +84,24 @@ while cap.isOpened():
                         cv2.contourArea(cn) > args.min_area):
                     c = cn
                     break
-                else:
-                    continue
             if cv2.contourArea(c) > args.min_area:  # ha a kontúr területe nagyobb mint min_area
                 x, y, w, h = cv2.boundingRect(c)  # kontúr adatai(x,y sarok, w,h méretei)
                 m = cv2.moments(c)
                 cX = int(m["m10"] / m["m00"])
                 cY = int(m["m01"] / m["m00"])
-                ''' if(cv2.boundingRect(max(contours, key=cv2.contourArea))!=cv2.boundingRect(c)):
-                    cv2.rectangle(frame2, (x, y), (x + w, y + h), (255, 0, 0), 2)  # zöld négyzet rajzolása a frame2 képre
-                else:'''
                 cv2.rectangle(frame2, (x, y), (x + w, y + h), (0, 255, 0), 2)  # zöld négyzet rajzolása a frame2 képre
             else:
                 pass
         # megjelenítés
         frame2rs = cv2.resize(frame2, (960, 540))  # frame átméretezése
+        # a megjelenítést a videó fps-hez igazítása
+        while int(round(time.time() * 1000)) < ms+(1000 / fps):
+            pass
         cv2.imshow('Kimenet', frame2rs)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép, vagy ha vége a videóstreamnek
+        ms = int(round(time.time() * 1000))
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép
             break
+
     else:
         break
 

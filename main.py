@@ -44,7 +44,7 @@ x = y = cX = cY = 0
 
 # kezdő frame beolvasása
 _, frame = cap.read()
-fps=cap.get(cv2.CAP_PROP_FPS)
+fps = cap.get(cv2.CAP_PROP_FPS)
 ms = int(round(time.time() * 1000))
 # program start
 while cap.isOpened():
@@ -77,9 +77,7 @@ while cap.isOpened():
                 mom = cv2.moments(cn)
                 cX1 = int(mom["m10"] / mom["m00"])
                 cY1 = int(mom["m01"] / mom["m00"])
-                # Ha az előző kontúr és a jelenlegi kontúr sarka között 10 képpont vagy kevesebb van
-                # és az előző kontúr középpontja és a jelenlegi kontúr középpontja között 10 képpont vagy kevesebb van
-                # akkor ez a kontúr lesz a jó
+                # Sarkopontok és Középpontok vizsgálata
                 if ((abs(x1 - x) <= 10 & abs(y1 - y) <= 10) | (abs(cX1 - cX) <= 10 & abs(cY1 - cY) <= 10)) & (
                         cv2.contourArea(cn) > args.min_area):
                     c = cn
@@ -101,9 +99,7 @@ while cap.isOpened():
         ms = int(round(time.time() * 1000))
         if cv2.waitKey(1) & 0xFF == ord('q'):  # q-val kilép
             break
-
     else:
         break
-
 cap.release()  # capture bezárása
 cv2.destroyAllWindows()  # ablakok bezárása

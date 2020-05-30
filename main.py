@@ -11,6 +11,7 @@ arg.add_argument("-v", "--video", help="Videófájl útvonala")
 arg.add_argument("-s", "--stream", help="Videostream url-je")
 arg.add_argument("-y", "--youtube", help="Youtube video url-je)")
 arg.add_argument("-a", "--min-area", type=int, default=700, help=" Minimális területméret(nem kötelező, alapból 500)")
+arg.add_argument("-d", "--distance", type=int, default=10, help=" Maximális távolság két kontúr között(nem kötelező, alapból 10)")
 args = arg.parse_args()
 
 # Parancssori argumentumok meglétének ellenőrzése
@@ -62,7 +63,8 @@ while cap.isOpened():
         # Küszöbölés
         f_mov = (f_gauss.astype(int) > 20) * 255
         # Nyitás
-        f_open = cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
+        kernel = np.ones((3, 3), np.uint8)
+        f_open = cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, kernel, iterations=2)
         # kontúrok méretének megnövelése(dilatáció)
         f_dil = cv2.dilate(f_open, None, iterations=3)
         # kontúrok keresése
@@ -71,14 +73,13 @@ while cap.isOpened():
         if len(contours) != 0:
             cns = sorted(contours, key=cv2.contourArea, reverse=True) # a kontúrok rendezése csökkenő sorrendbe
             c = max(contours, key=cv2.contourArea)  # a legnagyobb kontúr megtalálása
-            cns = sorted(contours, key=cv2.contourArea, reverse=True)
             for cn in cns:
                 x1, y1, w1, h1 = cv2.boundingRect(cn)
                 mom = cv2.moments(cn)
                 cX1 = int(mom["m10"] / mom["m00"])
                 cY1 = int(mom["m01"] / mom["m00"])
                 # Sarkopontok és Középpontok vizsgálata
-                if ((abs(x1 - x) <= 10 & abs(y1 - y) <= 10) | (abs(cX1 - cX) <= 10 & abs(cY1 - cY) <= 10)) & (
+                if ((abs(x1 - x) <= args.distance & abs(y1 - y) <= args.distance) | (abs(cX1 - cX) <= args.distance & abs(cY1 - cY) <= args.distance)) & (
                         cv2.contourArea(cn) > args.min_area):
                     c = cn
                     break

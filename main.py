@@ -8,7 +8,7 @@ arg = argparse.ArgumentParser(description='Mozgáskövető biztonsági kamera pr
 arg.add_argument("-c", "--cam", type=int, help="Kamera eszközkódja")
 arg.add_argument("-v", "--video", help="Videófájl útvonala")
 arg.add_argument("-s", "--stream", help="Videostream url-je")
-arg.add_argument("-y", "--youtube", help="Youtube video url-je)")
+arg.add_argument("-y", "--youtube", help="Youtube videó url-je")
 arg.add_argument("-a", "--min-area", type=int, default=700, help=" Minimális területméret(nem kötelező, alapból 500 px)")
 arg.add_argument("-d", "--distance", type=int, default=10, help=" Maximális távolság két kontúr között(nem kötelező, alapból 10 px)")
 args = arg.parse_args()

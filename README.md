@@ -7,5 +7,6 @@ Az alábbi repoban a Gépi látásra készített beadandóm található scriptte
     * NumPy
     * OpenCV
     * Pafy
-##A szoftver használata
+
+## A szoftver használata
 Megtalálható a dokumentációban

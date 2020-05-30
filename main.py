@@ -60,10 +60,10 @@ while cap.isOpened():
         # Gauss-szűrő
         f_gauss = cv2.GaussianBlur(f_abs.astype(np.uint8), (9, 9), 0)
         # Küszöbölés
-        f_mov = (f_abs.astype(int) > 20) * 255
+        f_mov = (f_gauss.astype(int) > 20) * 255
         # Nyitás
         f_open = cv2.morphologyEx(f_mov.astype(np.uint8), cv2.MORPH_OPEN, (3, 3), iterations=2)
-        # kontúrok méretének megnövelése(dilettáció)
+        # kontúrok méretének megnövelése(dilatáció)
         f_dil = cv2.dilate(f_open, None, iterations=3)
         # kontúrok keresése
         contours, _ = cv2.findContours(f_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

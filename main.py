@@ -78,7 +78,7 @@ while cap.isOpened():
                 cX1 = int(mom["m10"] / mom["m00"])
                 cY1 = int(mom["m01"] / mom["m00"])
                 # Sarkopontok és Középpontok vizsgálata
-                if ((abs(x1 - x) <= args.distance & abs(y1 - y) <= args.distance) | (abs(cX1 - cX) <= args.distance & abs(cY1 - cY) <= args.distance)) & (
+                if ((abs(x1 - x) <= args.distance and abs(y1 - y) <= args.distance) or (abs(cX1 - cX) <= args.distance and abs(cY1 - cY) <= args.distance)) and (
                         cv2.contourArea(cn) > args.min_area):
                     c = cn
                     break
